@@ -1,0 +1,9 @@
+.short {
+    text-align: right;
+    margin: 0 30px;
+}
+
+#canvas {
+    width: 640px;
+    height: 480px;
+}
