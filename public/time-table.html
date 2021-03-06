@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./stylesheets/time-table.css" />
+    <title>Document</title>
+  </head>
+  <body>
+    <table border="1" cellspacing="0">
+      <colgroup>
+        <col class="c1" day="-1" />
+        <col class="c1" day="1" />
+        <col class="c2" day="2" />
+        <col class="c3" day="3" />
+        <col class="c4" day="4" />
+        <col class="c5" day="5" />
+        <col class="c6" day="6" />
+        <col class="c7" day="0" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th></th>
+          <th>星期一</th>
+          <th>星期二</th>
+          <th>星期三</th>
+          <th>星期四</th>
+          <th>星期五</th>
+          <th>星期六</th>
+          <th>星期日</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr range="6:45~7:05">
+          <th>6:45~7:05</th>
+          <td>洗漱</td>
+          <td>洗漱</td>
+          <td>洗漱</td>
+          <td>洗漱</td>
+          <td>洗漱</td>
+          <td>洗漱</td>
+          <td>洗漱</td>
+        </tr>
+        <tr range="7:10~7:20">
+          <th>7:10~7:20</th>
+          <td rowspan="6">工作</td>
+          <td rowspan="6">工作</td>
+          <td rowspan="6">工作</td>
+          <td rowspan="6">工作</td>
+          <td rowspan="6">工作</td>
+          <td>背单词</td>
+          <td>背单词</td>
+        </tr>
+        <tr range="7:25~8:00">
+          <th>7:25~8:00</th>
+          <td>吃早饭</td>
+          <td>吃早饭</td>
+        </tr>
+        <tr range="8:00~11:40">
+          <th>8:00~11:40</th>
+          <td>学习WebRTC</td>
+          <td>学习WebRTC</td>
+        </tr>
+        <tr range="11:40~13:00">
+          <th>11:40~13:00</th>
+          <td>午饭休息</td>
+          <td>午饭休息</td>
+        </tr>
+        <tr range="13:00~17:00">
+          <th>13:00~17:00</th>
+          <td>学习WebRTC</td>
+          <td rowspan="4">看闲书、出去活动</td>
+        </tr>
+        <tr range="17:00~18:30">
+          <th>17:00~18:30</th>
+          <td>吃饭休息</td>
+        </tr>
+        <tr range="18:30~20:00">
+          <th>18:30~20:00</th>
+          <td>学习WebRTC</td>
+          <td>学习WebRTC</td>
+          <td>学习WebRTC</td>
+          <td>学习WebRTC</td>
+          <td>学习WebRTC</td>
+          <td rowspan="2">复习文档</td>
+        </tr>
+        <tr range="20:00~21:00">
+          <th>20:00~21:00</th>
+          <td>复习文档</td>
+          <td>复习文档</td>
+          <td>复习文档</td>
+          <td>复习文档</td>
+          <td>复习文档</td>
+        </tr>
+        <tr range="21:00~21:30">
+          <th>21:00~21:30</th>
+          <td>健身</td>
+          <td>健身</td>
+          <td>健身</td>
+          <td>健身</td>
+          <td>健身</td>
+          <td>健身</td>
+          <td>健身</td>
+        </tr>
+        <tr range="21:00~22:30">
+          <th>21:00~22:30</th>
+          <td>自由时间</td>
+          <td>自由时间</td>
+          <td>自由时间</td>
+          <td>自由时间</td>
+          <td>自由时间</td>
+          <td>自由时间</td>
+          <td>自由时间</td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+  <script src="./javascripts/time-table.js"></script>
+</html>

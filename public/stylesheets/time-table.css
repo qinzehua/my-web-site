@@ -1,0 +1,21 @@
+.c {
+    width: 80px;
+}
+
+
+ 
+table{
+    margin: 100px;
+    background-color:lightcyan;
+    border-color: aliceblue;
+}
+
+.today {
+    background-color: antiquewhite;
+}
+.now {
+    background-color: slateblue;
+}
+th,td {
+    text-align: center;
+}

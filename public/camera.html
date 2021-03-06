@@ -6,23 +6,42 @@
       name="viewport"
       content="initial-scale=1.0, maximum-scale=1, user-scalable=no"
     />
-
     <link rel="stylesheet" href="./css/index.css" />
   </head>
   <body>
-    <h1>Realtime communication with WebRTC</h1>
-    <video id="player" muted autoplay playsinline></video>
-    <canvas id="canvas"></canvas>
-    <br />
-    <button id="takePhoto">拍照</button>
-    <button id="download">下载</button>
-    <select id="filter">
-      <option value="none">None</option>
-      <option value="blur">blur</option>
-      <option value="grayscale">Grayscale</option>
-      <option value="rotate">hue-rotate</option>
-      <option value="opacity">opacity</option>
-    </select>
-    <script src="javascripts/client.js"></script>
+    <section>
+      <video id="player" muted autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+      <br />
+      <button id="muted">打开音量</button>
+      <button id="takePhoto">拍照</button>
+      <button id="download-photo">下载</button>
+      <select id="filter">
+        <option value="none">None</option>
+        <option value="blur">blur</option>
+        <option value="grayscale">Grayscale</option>
+        <option value="rotate">hue-rotate</option>
+        <option value="opacity">opacity</option>
+      </select>
+    </section>
+
+    <section>
+      <video playsinline id="recplayer"></video>
+      <br />
+      <button id="record">开始录制</button>
+      <button id="recplay" disabled>播放</button>
+      <button id="download-video" disabled>下载</button>
+    </section>
+    <section>
+      <video muted autoplay playsinline id="pc-player"></video>
+      <br />
+      <button id="pc-record">开始抓取桌面</button>
+      <button id="pc-recplay" disabled>播放</button>
+      <button id="pc-download-video" disabled>下载</button>
+    </section>
+    <script src="javascripts/webrtc/client.js"></script>
+    <script src="javascripts/webrtc/take-photo.js"></script>
+    <script src="javascripts/webrtc/record-video.js"></script>
+    <script src="javascripts/webrtc/record-desktop.js"></script>
   </body>
 </html>
