@@ -2,5 +2,4 @@
     "files.autoSave": "afterDelay",
     "javascript.format.insertSpaceAfterSemicolonInForStatements": false,
     "prettier.semi": false,
-    "typescript.format.insertSpaceAfterSemicolonInForStatements": false
 }
