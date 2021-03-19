@@ -1,0 +1,494 @@
+<html>
+  <head>
+    <title>WebRTC PeerConnection</title>
+    <style type="text/css">
+      button {
+        margin: 10px 20px 25px 0;
+        vertical-align: top;
+        width: 134px;
+      }
+
+      table {
+        margin: 200px (50% - 100) 0 0;
+      }
+
+      textarea {
+        color: #444;
+        font-size: 0.9em;
+        font-weight: 300;
+        height: 20em;
+        padding: 5px;
+        width: calc(100% - 10px);
+      }
+
+      div#getUserMedia {
+        padding: 0 0 8px 0;
+      }
+
+      div.input {
+        display: inline-block;
+        margin: 0 4px 0 0;
+        vertical-align: top;
+        width: 310px;
+      }
+
+      div.input > div {
+        margin: 0 0 20px 0;
+        vertical-align: top;
+      }
+
+      div.output {
+        background-color: #eee;
+        display: inline-block;
+        font-family: "Inconsolata", "Courier New", monospace;
+        font-size: 0.9em;
+        padding: 10px 10px 10px 25px;
+        position: relative;
+        top: 10px;
+        white-space: pre;
+        width: 270px;
+      }
+
+      div#preview {
+        border-bottom: 1px solid #eee;
+        margin: 0 0 1em 0;
+        padding: 0 0 0.5em 0;
+      }
+
+      div#preview > div {
+        display: inline-block;
+        vertical-align: top;
+        width: calc(50% - 12px);
+      }
+
+      section#statistics div {
+        display: inline-block;
+        font-family: "Inconsolata", "Courier New", monospace;
+        vertical-align: top;
+        width: 308px;
+      }
+
+      section#statistics div#senderStats {
+        margin: 0 20px 0 0;
+      }
+
+      section#constraints > div {
+        margin: 0 0 20px 0;
+      }
+
+      h2 {
+        margin: 0 0 1em 0;
+      }
+
+      section#constraints label {
+        display: inline-block;
+        width: 156px;
+      }
+
+      section {
+        margin: 0 0 20px 0;
+        padding: 0 0 15px 0;
+      }
+
+      video {
+        background: #222;
+        margin: 0 0 0 0;
+        --width: 100%;
+        width: var(--width);
+        height: 225px;
+      }
+
+      @media screen and (max-width: 720px) {
+        button {
+          font-weight: 500;
+          height: 56px;
+          line-height: 1.3em;
+          width: 90px;
+        }
+
+        div#getUserMedia {
+          padding: 0 0 40px 0;
+        }
+
+        section#statistics div {
+          width: calc(50% - 14px);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div>
+      <div>
+        <button id="connserver">Connect Sig Server</button>
+        <button id="start">Start</button>
+        <button id="call" disabled>Call</button>
+        <button id="hangup" disabled>HangUp</button>
+
+        <button id="leave" disabled>Leave</button>
+      </div>
+
+      <div>
+        <input id="shareDesk" type="checkbox" /><label for="shareDesk"
+          >Share Desktop</label
+        >
+      </div>
+
+      <div id="preview">
+        <div>
+          <h2>Local:</h2>
+          <video id="localvideo" autoplay playsinline muted></video>
+          <h2>Offer SDP:</h2>
+          <textarea id="offer"></textarea>
+        </div>
+        <div>
+          <h2>Remote:</h2>
+          <video id="remotevideo" autoplay playsinline></video>
+          <h2>Answer SDP:</h2>
+          <textarea id="answer"></textarea>
+        </div>
+      </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var localVideo = document.querySelector("video#localvideo")
+      var remoteVideo = document.querySelector("video#remotevideo")
+      var btnConn = document.querySelector("button#connserver")
+      var btnLeave = document.querySelector("button#leave")
+      var offer = document.querySelector("textarea#offer")
+      var answer = document.querySelector("textarea#answer")
+      var shareDeskBox = document.querySelector("input#shareDesk")
+      var btnStart = document.querySelector("#start")
+      var btnCall = document.querySelector("#call")
+      var btnHangup = document.querySelector("#hangup")
+
+      var localStream = null
+      var remoteStream = null
+
+      var pc = null
+
+      var roomid
+      var socket = null
+
+      var offerdesc = null
+      var state = "init"
+
+      function IsPC() {
+        var userAgentInfo = navigator.userAgent
+        var Agents = [
+          "Android",
+          "iPhone",
+          "SymbianOS",
+          "Windows Phone",
+          "iPad",
+          "iPod",
+        ]
+        var flag = true
+
+        for (var v = 0; v < Agents.length; v++) {
+          if (userAgentInfo.indexOf(Agents[v]) > 0) {
+            flag = false
+            break
+          }
+        }
+
+        return flag
+      }
+
+      function is_android() {
+        var u = navigator.userAgent,
+          app = navigator.appVersion
+        var isAndroid = u.indexOf("Android") > -1 || u.indexOf("Linux") > -1 //g
+        var isIOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/) //ios终端
+        if (isAndroid) {
+          //这个是安卓操作系统
+          return true
+        }
+
+        if (isIOS) {
+          //这个是ios操作系统
+          return false
+        }
+      }
+
+      function sendMessage(roomid, data) {
+        socket.emit("message", roomid, data)
+      }
+
+      function conn() {
+        socket = io.connect()
+
+        socket.on("joined", (roomid, id) => {
+          console.log("i am joined")
+          state = "joined"
+          createPeerConnection()
+          bindTracks()
+
+          btnConn.disabled = true
+          btnLeave.disabled = false
+        })
+
+        socket.on("otherjoin", (roomid) => {
+          console.log("other joind")
+          if (state === "joined_unbind") {
+            createPeerConnection()
+            bindTracks()
+          }
+
+          state = "joined_conn"
+          call()
+        })
+
+        socket.on("full", (roomid, id) => {
+          socket.disconnect()
+          hangup()
+          closeLocalMedia()
+          state = "leaved"
+        })
+
+        socket.on("leaved", (roomid, id) => {
+          state = "leaved"
+          socket.disconnect()
+          btnConn.disabled = false
+          btnLeave.disabled = true
+        })
+
+        socket.on("bye", (room, id) => {
+          console.log("receive bye message", roomid, id)
+          state = "joined_unbind"
+          hangup()
+          offer.value = ""
+          answer.value = ""
+        })
+
+        socket.on("disconnect", (socket) => {
+          if (!(state === "leaved")) {
+            hangup()
+            closeLocalMedia()
+          }
+          state = "leaved"
+        })
+
+        socket.on("message", (roomid, data) => {
+          if (data === null || data === undefined) {
+            return
+          }
+
+          if (data.hasOwnProperty("type") && data.type === "offer") {
+            offer.value = data.sdp
+            pc.setRemoteDescription(new RTCSessionDescription(data))
+            pc.createAnswer().then(getAnswer).catch(handleAnswerError)
+          } else if (data.hasOwnProperty("type") && data.type == "answer") {
+            answer.value = data.sdp
+            pc.setRemoteDescription(new RTCSessionDescription(data))
+          } else if (data.hasOwnProperty("type") && data.type === "candidate") {
+            var candidate = new RTCIceCandidate({
+              sdpMLineIndex: data.label,
+              candidate: data.candidate,
+            })
+            pc.addIceCandidate(candidate)
+          } else {
+            console.log("the message is invalid!", data)
+          }
+        })
+
+        roomid = 1
+        socket.emit("join", roomid)
+
+        return true
+      }
+
+      function connSignalServer() {
+        start()
+        return true
+      }
+
+      function getMediaStream(stream) {
+        if (localStream) {
+          stream.getAudioTracks().forEach((track) => {
+            localStream.addTrack(track)
+            stream.removeTrack(track)
+          })
+        } else {
+          localStream = stream
+        }
+
+        localVideo.srcObject = localStream
+        conn()
+        // btnStart.disabled = true
+        // btnCall.disabled = true
+        // btnHangup.disabled = true
+      }
+
+      function getDeskStream(stream) {
+        localStream = stream
+      }
+
+      function handleError(err) {
+        console.error("Failed to get Media Stream!", err)
+      }
+
+      function shareDesk() {
+        if (IsPC()) {
+          navigator.mediaDevices
+            .getDisplayMedia({ video: true })
+            .then(getDeskStream)
+            .catch(handleError)
+
+          return true
+        }
+
+        return false
+      }
+
+      function start() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          console.error("the getUserMedia is not supported!")
+          return
+        } else {
+          var constraints
+
+          if (shareDeskBox.checked && shareDesk()) {
+            constraints = {
+              video: false,
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+              },
+            }
+          } else {
+            constraints = {
+              video: {
+                width: 640,
+                height: 480,
+              },
+            }
+          }
+
+          navigator.mediaDevices
+            .getUserMedia(constraints)
+            .then(getMediaStream)
+            .catch(handleError)
+        }
+      }
+
+      function getRemoteStream(e) {
+        remoteStream = e.streams[0]
+        remoteVideo.srcObject = e.streams[0]
+      }
+
+      function handleOfferError(err) {
+        console.error("Failed to create offer:", err)
+      }
+
+      function handleAnswerError(err) {
+        console.error("Failed to create answer:", err)
+      }
+
+      function getAnswer(desc) {
+        pc.setLocalDescription(desc)
+        answer.value = desc.sdp
+
+        //send answer sdp
+        sendMessage(roomid, desc)
+      }
+
+      function getOffer(desc) {
+        pc.setLocalDescription(desc)
+        offer.value = desc.sdp
+        offerdesc = desc
+
+        //send offer sdp
+        sendMessage(roomid, offerdesc)
+      }
+
+      function createPeerConnection() {
+        if (!pc) {
+          pc = new RTCPeerConnection()
+
+          pc.onicecandidate = (e) => {
+            if (e.candidate) {
+              sendMessage(roomid, {
+                type: "candidate",
+                label: event.candidate.sdpMLineIndex,
+                id: event.candidate.sdpMid,
+                candidate: event.candidate.candidate,
+              })
+            } else {
+              console.log("this is the end candidate")
+            }
+          }
+
+          pc.ontrack = getRemoteStream
+        } else {
+          console.log("the pc have be created!")
+        }
+
+        return
+      }
+
+      function bindTracks() {
+        if (pc === null || localStream === undefined) {
+          console.error("pc is null or undefined!")
+          return
+        }
+
+        if (localStream === null || localStream === undefined) {
+          console.error("localstream is null or undefined!")
+          return
+        }
+
+        localStream.getTracks().forEach((track) => {
+          pc.addTrack(track, localStream)
+        })
+      }
+
+      function call() {
+        if (state === "joined_conn") {
+          var offerOptions = {
+            offerToRecieveAudio: 1,
+            offerToRecieveVideo: 1,
+          }
+
+          pc.createOffer(offerOptions).then(getOffer).catch(handleOfferError)
+        }
+      }
+
+      function hangup() {
+        if (!pc) {
+          return
+        }
+
+        offerdesc = null
+
+        pc.close()
+        pc = null
+      }
+
+      function closeLocalMedia() {
+        if (!(localStream === null || localStream === undefined)) {
+          localStream.getTracks().forEach((track) => {
+            track.stop()
+          })
+        }
+        localStream = null
+      }
+
+      function leave() {
+        socket.emit("leave", roomid) //notify server
+
+        hangup()
+        closeLocalMedia()
+
+        offer.value = ""
+        answer.value = ""
+        btnConn.disabled = false
+        btnLeave.disabled = true
+      }
+
+      btnConn.onclick = connSignalServer
+      btnLeave.onclick = leave
+    </script>
+  </body>
+</html>

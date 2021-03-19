@@ -5,6 +5,7 @@ const mediaStreamConstraints = {
 }
 const offerOptions = {
   offerToReceiveVideo: 1,
+  offerToReceiveAudio: 1,
 }
 
 const localVideo = document.getElementById("localVideo")
